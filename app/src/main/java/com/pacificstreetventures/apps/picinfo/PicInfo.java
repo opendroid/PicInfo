@@ -27,7 +27,7 @@ import java.util.UUID;
  */
 public class PicInfo {
     private final String TAG = getClass().getSimpleName();
-
+    private ImageType mType;
     private UUID mImageId; // Unique image ID traversing the list
     private Uri mImageFileName; // As provided by Content Provider
     private JpegExifData mJpegExifData;
@@ -44,7 +44,7 @@ public class PicInfo {
         mError = null;
     }
 
-    // Store pic info
+    // Call this after other elenets have been set.
     public void processImageMetaData(final String filename) {
         // Image UUID
         // mImageId = UUID.randomUUID(); // Generate a random UUID
@@ -61,8 +61,7 @@ public class PicInfo {
                 // Use Android Library to get EXIF info.
                 // Use mime type from database not image itself ('easy')
                 if ((mColumnsInDb != null) &&
-                        (mColumnsInDb.getMimeType() != null) &&
-                        mColumnsInDb.getMimeType().toLowerCase(Locale.US).contains("jpeg")) {
+                        (mType == ImageType.JPEG)) {
                     fetchExifDataForJpeg(filename);
                 }
 
@@ -105,6 +104,10 @@ public class PicInfo {
     public void setID(long id) {
         mColumnsInDb.setID(id);
     }
+
+    public ImageType getImageType() {
+        return mType;
+    }
     public void setSize(long sz) {
         mColumnsInDb.setSize(sz);
     }
@@ -113,6 +116,23 @@ public class PicInfo {
     }
     public void setMimeType (String mimeType) {
         mColumnsInDb.setMimeType(mimeType);
+        if (mimeType.toLowerCase(Locale.US).contains("jpe") ||
+                mimeType.toLowerCase(Locale.US).contains("jpeg") ||
+                mimeType.toLowerCase(Locale.US).contains("jpg")) {
+            mType = ImageType.JPEG;
+        } else if (mimeType.toLowerCase(Locale.US).contains("png")) {
+            mType = ImageType.PNG;
+        } else if (mimeType.toLowerCase(Locale.US).contains("bmp")) {
+            mType = ImageType.BMP;
+        } else if (mimeType.toLowerCase(Locale.US).contains("gif")) {
+            mType = ImageType.GIF;
+        } else if (mimeType.toLowerCase(Locale.US).contains("pdf")) {
+            mType = ImageType.PDF;
+        } else if (mimeType.toLowerCase(Locale.US).contains("tiff")) {
+            mType = ImageType.TIFF;
+        } else {
+            mType = ImageType.UNKNOWN;
+        }
     }
     public void setTitle (String title) {
         mColumnsInDb.setTitle(title);
@@ -157,7 +177,8 @@ public class PicInfo {
 
         String s = "";
 
-        if (mImageFileName != null) s += "\n[IMAGEDB] Filename - " + mImageFileName.toString();
+        if (mImageFileName != null) s += "\n[IMAGEDB] Filename - " + mImageFileName.toString()
+                + ", MIME:" + mType;
         if (mColumnsInDb != null) s += mColumnsInDb; // Print DB columns
         if (mError != null) s += mError; //Error in this module
         if (mJpegExifData != null) s += mJpegExifData; // Read EXIF data
