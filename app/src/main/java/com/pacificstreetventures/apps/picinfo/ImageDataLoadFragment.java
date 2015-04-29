@@ -50,7 +50,7 @@ public class ImageDataLoadFragment extends Fragment
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        public void onDatabaseUpdated(List<PicInfo> dataList);
+        public void onDatabaseUpdated(final List<PicInfo> dataList, final int loaderId);
     }
 
 
@@ -269,7 +269,7 @@ public class ImageDataLoadFragment extends Fragment
             mPicsDataAll.addAll(whichList);
             Log.d(TAG, "onLoadFinished: added from - " + dbName + ", read:" + pix.size() + " pictures");
             if (mListener != null) {
-                mListener.onDatabaseUpdated(mPicsDataAll);
+                mListener.onDatabaseUpdated(mPicsDataAll, loaderId);
             }
         }
     }
@@ -289,7 +289,7 @@ public class ImageDataLoadFragment extends Fragment
                 break;
         }
         if (mListener != null) {
-            mListener.onDatabaseUpdated(mPicsDataAll);
+            mListener.onDatabaseUpdated(mPicsDataAll, loader.getId());
         }
     } // End reset loader
 

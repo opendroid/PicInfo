@@ -27,7 +27,7 @@ import java.util.UUID;
  */
 public class PicInfo {
     private final String TAG = getClass().getSimpleName();
-    private ImageType mType;
+    private ImageType mImageType;
     private UUID mImageId; // Unique image ID traversing the list
     private Uri mImageFileName; // As provided by Content Provider
     private JpegExifData mJpegExifData;
@@ -60,24 +60,24 @@ public class PicInfo {
             if (imageFile.exists()) {
                 // Use Android Library to get EXIF info.
                 // Use mime type from database not image itself ('easy')
+                // Note: trying to get Exif data on non-JPEG file gives all zeros.
                 if ((mColumnsInDb != null) &&
-                        (mType == ImageType.JPEG)) {
+                        (mImageType == ImageType.JPEG)) {
                     fetchExifDataForJpeg(filename);
                 }
-
                 // Use library metadata-extractor-2.8.1.jar and 'xmpcore-5.1.2.jar'
                 try {
                     mImageMetaData = ImageMetadataReader.readMetadata(imageFile);
                     mError = null;
                 } catch (ImageProcessingException ex) {
                     mImageMetaData = null;
-                    mError = "\n[IMAGEDB] Error Image processing exception on: " + filename;
-                    Log.e(TAG, "ProcessingException: filename:" + filename + "\n", ex);
-                    Log.d(TAG, "MetaData:" + this.toString());
+                    mError = "\n[EXIF] metadata-extractor-2.8.1 Error Image processing exception on: " + filename;
+                    // Log.e(TAG, "ProcessingException: filename:" + filename + "\n", ex);
+                    // Log.d(TAG, "MetaData:" + this.toString());
                 } catch (IOException ex) {
-                    Log.e(TAG, "IOException: filename:" + filename + "\n", ex);
+                    // Log.e(TAG, "IOException: filename:" + filename + "\n", ex);
                     mImageMetaData = null;
-                    mError = "\n[IMAGEDB] Error Can not read image: " + filename;
+                    mError = "\n[EXIF] metadata-extractor-2.8.1 Error Can not read image: " + filename;
                     // Log.d(TAG, "MetaData:" + this.toString());
                 }
 
@@ -106,32 +106,43 @@ public class PicInfo {
     }
 
     public ImageType getImageType() {
-        return mType;
+        return mImageType;
     }
     public void setSize(long sz) {
         mColumnsInDb.setSize(sz);
+    }
+
+    public long getImageSizeBytes() {
+        return mColumnsInDb.getSize();
     }
     public void setDisplayName (String displayName) {
         mColumnsInDb.setDisplayName(displayName);
     }
     public void setMimeType (String mimeType) {
+        if (mimeType == null) {
+            mColumnsInDb.setMimeType("image/unknown");
+            mImageType = ImageType.UNKNOWN;
+            return;
+        }
+        ;
+
         mColumnsInDb.setMimeType(mimeType);
         if (mimeType.toLowerCase(Locale.US).contains("jpe") ||
                 mimeType.toLowerCase(Locale.US).contains("jpeg") ||
                 mimeType.toLowerCase(Locale.US).contains("jpg")) {
-            mType = ImageType.JPEG;
+            mImageType = ImageType.JPEG;
         } else if (mimeType.toLowerCase(Locale.US).contains("png")) {
-            mType = ImageType.PNG;
+            mImageType = ImageType.PNG;
         } else if (mimeType.toLowerCase(Locale.US).contains("bmp")) {
-            mType = ImageType.BMP;
+            mImageType = ImageType.BMP;
         } else if (mimeType.toLowerCase(Locale.US).contains("gif")) {
-            mType = ImageType.GIF;
+            mImageType = ImageType.GIF;
         } else if (mimeType.toLowerCase(Locale.US).contains("pdf")) {
-            mType = ImageType.PDF;
+            mImageType = ImageType.PDF;
         } else if (mimeType.toLowerCase(Locale.US).contains("tiff")) {
-            mType = ImageType.TIFF;
+            mImageType = ImageType.TIFF;
         } else {
-            mType = ImageType.UNKNOWN;
+            mImageType = ImageType.UNKNOWN;
         }
     }
     public void setTitle (String title) {
@@ -172,13 +183,21 @@ public class PicInfo {
         mColumnsInDb.setOrientation(orientation);
     }
 
+    public boolean hasLocation() {
+        return ((mColumnsInDb.getLatitude() != 0.0) && (mColumnsInDb.getLongitude() != 0.0));
+    }
+
+    public boolean hasMakeModelInfo() {
+        return ((mJpegExifData != null) && (mJpegExifData.hasMakeModelInfo()));
+    }
+
     @Override
     public String toString() {
 
         String s = "";
 
         if (mImageFileName != null) s += "\n[IMAGEDB] Filename - " + mImageFileName.toString()
-                + ", MIME:" + mType;
+                + ", MIME:" + mImageType;
         if (mColumnsInDb != null) s += mColumnsInDb; // Print DB columns
         if (mError != null) s += mError; //Error in this module
         if (mJpegExifData != null) s += mJpegExifData; // Read EXIF data
@@ -188,6 +207,8 @@ public class PicInfo {
             for (Directory directory : mImageMetaData.getDirectories()) {
                 // Each Directory stores values in Tag objects
                 for (Tag tag : directory.getTags()) {
+                    // Don't read user comments for now. -- prints garbage
+                    if (tag.toString().contains("User Comment")) continue;
                     s += tag.toString() + "\n";
                 }
                 // Each Directory may also contain error messages
@@ -198,7 +219,6 @@ public class PicInfo {
                 } // end if
             } // end for 'all directories'
         }
-
         return s;
     }
 

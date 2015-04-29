@@ -6,4 +6,5 @@
     <color name="accentColor">#CDDC39</color>
     <color name="appButtonColor">#EAEAEA</color>
     <color name="appButtonTextColor">#FFEA00</color>
+    <color name="appCardBackgroundColor">#F0F2F4</color>
 </resources>

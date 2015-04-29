@@ -17,6 +17,11 @@ import java.io.IOException;
 
 /**
  * Created by ajaythakur on 4/26/15.
+ *
+ * JpegExifData: extracts all the EXIF elements from a JPEG images file. It is observed that there
+ * are lots of JPEG files that are malformed or not propely delete from the system. For these files
+ * an Exception is thrown. Also error string is printed on the object if it exists.
+ *
  */
 public class JpegExifData {
     private final String TAG = getClass().getSimpleName();
@@ -98,6 +103,10 @@ public class JpegExifData {
     private String getExifTag(ExifInterface exifInterface, String tag) {
         String value = exifInterface.getAttribute(tag);
         return (null != value ? value : "");
+    }
+
+    public boolean hasMakeModelInfo() {
+        return (!mMake.isEmpty() & !mModel.isEmpty());
     }
 
     @Override

@@ -19,5 +19,5 @@ public enum ImageType {
     PDF,
     PNG,
     TIFF,
-    UNKNOWN
+    UNKNOWN;
 }

@@ -116,8 +116,17 @@ public class PicInfoMainActivity extends ActionBarActivity
     //---------------------------------------------------------------------------------------------
 
     @Override
-    public void onDatabaseUpdated(List<PicInfo> dataList) {
+    public void onDatabaseUpdated(final List<PicInfo> dataList, final int loaderID) {
         mPicsData = dataList; // update data list
         // Inform adapter of changes
+        OverallPicsSummary summarizedData = new OverallPicsSummary(mPicsData);
+        summarizedData.sortByCountDesc();
+        Log.d(TAG, "onDatabaseUpdated:" + summarizedData);
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+            }
+        });
     }
 }
